@@ -17,13 +17,17 @@ use hdk::{
 };
 
 mod schema;
+mod utils;
+mod entry_defs;
 
 use crate::schema::{Query, Mutation, Schema};
 use juniper::{Variables};
 
-
 define_zome! {
-    entries: []
+    entries: [
+        entry_defs::user_anchor_def(),
+        entry_defs::user_entry_def()
+    ]
 
     genesis: || { Ok(()) }
 
@@ -40,16 +44,18 @@ define_zome! {
 
 
 pub fn handle_query(query: String) -> ZomeApiResult<RawString> {
-    // execute query using juniper
-    let (res, _errors) = juniper::execute(
+    // execute query using juniper on this zomes schema
+    let (res, errors) = juniper::execute(
         &query,
         None,
         &Schema::new(Query, Mutation),
         &Variables::new(),
         &()
-    ).map_err(|err| {
+    ).map_err(|_| {
         ZomeApiError::Internal("Failed to execute query".to_string())
     })?;
+
+    hdk::debug(format!("{:?}", errors))?;
 
     let result_string = serde_json::to_string(&res).map_err(|err| {
         ZomeApiError::Internal(err.to_string())
