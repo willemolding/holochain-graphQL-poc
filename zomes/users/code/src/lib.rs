@@ -4,14 +4,13 @@ extern crate hdk;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 #[macro_use]
 extern crate juniper;
 use hdk::{
-    error::ZomeApiResult,
+    error::{ZomeApiResult, ZomeApiError},
     holochain_core_types::{
     	json::{RawString}
     }
@@ -19,8 +18,8 @@ use hdk::{
 
 mod schema;
 
-use crate::schema::{Query, Schema};
-use juniper::{Variables, EmptyMutation};
+use crate::schema::{Query, Mutation, Schema};
+use juniper::{Variables};
 
 
 define_zome! {
@@ -45,12 +44,17 @@ pub fn handle_query(query: String) -> ZomeApiResult<RawString> {
     let (res, _errors) = juniper::execute(
         &query,
         None,
-        &Schema::new(Query, EmptyMutation::new()),
+        &Schema::new(Query, Mutation),
         &Variables::new(),
         &()
-    ).unwrap();
+    ).map_err(|err| {
+        ZomeApiError::Internal("Failed to execute query".to_string())
+    })?;
 
-    let result_string = serde_json::to_string(&res).unwrap();
+    let result_string = serde_json::to_string(&res).map_err(|err| {
+        ZomeApiError::Internal(err.to_string())
+    })?;
+
 
     Ok(RawString::from(result_string))
 }

@@ -15,6 +15,11 @@ test('description of example test', (t) => {
   console.log(result)
   t.equal(result.Ok, "{\"apiVersion\":\"1.0\"}")
 
+
+  const result2 = app.call("users", "main", "graphql", {query: "query { users { name } }"})
+  console.log(result2)
+  t.equal(result2.Ok, JSON.stringify({ users: { name: "wollum" } }))
+
   // ends this test
   t.end()
 })
