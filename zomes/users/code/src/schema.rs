@@ -11,12 +11,14 @@ use hdk::{
 
 use crate::utils::get_links_and_load_type;
 
-// Structs can be both holochain entry types and GraphQL Objects
-#[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 #[derive(GraphQLObject)]
+/// Some data about a single user. This rustdoc string will be visible to consumers of the GraphQL API!
 struct User {
+    /// the users name, self documenting api :)
     name: String,
+    /// The age of the user. Lying is ok
     age: i32,
+    /// The user entries address in the DHT
     address: String,
 }
 
@@ -27,15 +29,15 @@ impl User {
 }
 
 // there needs to be a different type used for creating a particular entry
-// this seems to be a requirement of juniper.
-// Writing a custom from implementation makes this nice
+// Structs can be both holochain entry types and GraphQL Objects
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 #[derive(GraphQLInputObject)]
+/// data type used to add a new user
+/// This is also what we store in the DHT
 pub struct NewUser {
     pub name: String,
     pub age: i32,
 }
-
 
 
 fn get_user_anchor() -> Entry {
@@ -45,6 +47,12 @@ fn get_user_anchor() -> Entry {
     )
 }
 
+
+/*
+ * This is the macro for defining the query schema for the graphQL provider
+ * Each field is something that can be queried. These take parameters to filter as needed
+ */
+
 pub struct Query;
 
 graphql_object!(Query: () |&self| {
@@ -53,7 +61,11 @@ graphql_object!(Query: () |&self| {
         Ok("1.0".to_string())
     }
 
-    field user(address: String) -> FieldResult<User> {
+    /// Field used to retrieve a single user by their address
+    field user(
+        /// users address in the DHT. Parameter rustdoc strings will be visible as well!
+        address: String
+    ) -> FieldResult<User> {
 
         let entry = hdk::get_entry(address.clone().into())?.unwrap();
         let value = match entry {
@@ -76,6 +88,11 @@ graphql_object!(Query: () |&self| {
 });
 
 
+/*
+ * This mutation object is what allows the consumer to change the data stored in the store
+ * In holochain the store is the DHT. You also need to be sure you allow some pattern (such as links)
+ * such that the values can be retrieved again later
+ */
 
 pub struct Mutation;
 
