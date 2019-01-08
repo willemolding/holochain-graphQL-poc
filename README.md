@@ -6,7 +6,7 @@
 
 ## run
 
-`mkdir -c ./tmp-storage && holochain_container -c ./container-config.toml`
+`mkdir -p ./tmp-storage && holochain_container -c ./container-config.toml`
 
 and to test use
 
